@@ -1,226 +1,143 @@
-const fs = require('fs');
-const path = require('path');
-
-// File where tasks will be saved
-const TASKS_FILE = path.join(__dirname, 'tasks.json');
-
-// Class to manage tasks
-class TodoList {
-    constructor() {
-        this.tasks = this.loadTasks();
-    }
-
-    // Load tasks from file
-    loadTasks() {
-        try {
-            if (fs.existsSync(TASKS_FILE)) {
-                const data = fs.readFileSync(TASKS_FILE, 'utf8');
-                return JSON.parse(data);
-            }
-        } catch (error) {
-            console.log('⚠️  Error loading tasks, starting new list');
-        }
-        return [];
-    }
-
-    // Save tasks to file
-    saveTasks() {
-        try {
-            fs.writeFileSync(TASKS_FILE, JSON.stringify(this.tasks, null, 2));
-            return true;
-        } catch (error) {
-            console.log('❌ Error saving tasks');
-            return false;
-        }
-    }
-
-    // Add new task
-    add(description) {
-        if (!description || description.trim() === '') {
-            console.log('❌ Task cannot be empty');
-            return;
-        }
-
-        const newTask = {
-            id: this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) + 1 : 1,
-            description: description.trim(),
-            completed: false,
-            createdAt: new Date().toISOString()
-        };
-
-        this.tasks.push(newTask);
-        this.saveTasks();
-        console.log(`✅ Task added: "${newTask.description}" (ID: ${newTask.id})`);
-    }
-
-    // List all tasks
-    list() {
-        if (this.tasks.length === 0) {
-            console.log('📝 No tasks in the list');
-            return;
-        }
-
-        console.log('\n📋 TASK LIST:\n');
-        console.log('━'.repeat(60));
-        
-        this.tasks.forEach(task => {
-            const status = task.completed ? '✓' : '○';
-            const style = task.completed ? '\x1b[90m' : '\x1b[0m'; // Gray if completed
-            const reset = '\x1b[0m';
-            
-            console.log(`${style}[${status}] ${task.id}. ${task.description}${reset}`);
+// Animations and effects for the login form
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Animation for inputs when they receive focus
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.3s ease';
         });
         
-        console.log('━'.repeat(60));
-        
-        const completed = this.tasks.filter(t => t.completed).length;
-        const pending = this.tasks.length - completed;
-        console.log(`\n📊 Total: ${this.tasks.length} | Pending: ${pending} | Completed: ${completed}\n`);
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+
+    // Handle the login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Button animation
+            const btn = loginForm.querySelector('button');
+            btn.textContent = 'Signing in...';
+            btn.style.background = 'linear-gradient(135deg, #52c234 0%, #4caf50 100%)';
+            
+            // Redirect to welcome.html after a small delay for the effect
+            setTimeout(() => {
+                window.location.href = 'welcome.html';
+            }, 1000);
+        });
     }
 
-    // Complete a task
-    complete(id) {
-        const task = this.tasks.find(t => t.id === parseInt(id));
-        
-        if (!task) {
-            console.log(`❌ Task not found with ID: ${id}`);
-            return;
-        }
-
-        if (task.completed) {
-            console.log(`⚠️  Task was already completed: "${task.description}"`);
-            return;
-        }
-
-        task.completed = true;
-        task.completedAt = new Date().toISOString();
-        this.saveTasks();
-        console.log(`✓ Task completed: "${task.description}"`);
-    }
-
-    // Delete a task
-    delete(id) {
-        const index = this.tasks.findIndex(t => t.id === parseInt(id));
-        
-        if (index === -1) {
-            console.log(`❌ Task not found with ID: ${id}`);
-            return;
-        }
-
-        const deleted = this.tasks.splice(index, 1)[0];
-        this.saveTasks();
-        console.log(`🗑️  Task deleted: "${deleted.description}"`);
-    }
-
-    // Clear completed tasks
-    clear() {
-        const beforeCount = this.tasks.length;
-        this.tasks = this.tasks.filter(t => !t.completed);
-        const removed = beforeCount - this.tasks.length;
-        
-        if (removed === 0) {
-            console.log('ℹ️  No completed tasks to remove');
-            return;
-        }
-
-        this.saveTasks();
-        console.log(`🗑️  ${removed} completed task(s) deleted`);
-    }
-}
-
-// Function to show help
-function showHelp() {
-    console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║              📝 TODO LIST SYSTEM (TASK LIST)              ║
-╚═══════════════════════════════════════════════════════════╝
-
-USAGE:
-  node function.js <command> [arguments]
-
-COMMANDS:
-
-  add <description>     Add a new task
-                        Example: node function.js add "Study JavaScript"
-
-  list                  Show all tasks
-                        Example: node function.js list
-
-  complete <id>         Mark a task as completed
-                        Example: node function.js complete 1
-
-  delete <id>           Delete a specific task
-                        Example: node function.js delete 2
-
-  clear                 Delete all completed tasks
-                        Example: node function.js clear
-
-  help                  Show this help
-                        Example: node function.js help
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-USAGE EXAMPLES:
-
-  node function.js add "Finish ITM project"
-  node function.js list
-  node function.js complete 1
-  node function.js delete 2
-  node function.js clear
-
-`);
-}
-
-// Main program
-function main() {
-    const args = process.argv.slice(2);
-    const command = args[0];
-    const todo = new TodoList();
-
-    if (!command || command === 'help') {
-        showHelp();
-        return;
-    }
-
-    switch (command.toLowerCase()) {
-        case 'add':
-            const description = args.slice(1).join(' ');
-            todo.add(description);
-            break;
-
-        case 'list':
-            todo.list();
-            break;
-
-        case 'complete':
-        case 'done':
-            if (!args[1]) {
-                console.log('❌ You must provide the task ID');
-                console.log('   Example: node function.js complete 1');
-            } else {
-                todo.complete(args[1]);
+    // Handle the registration form
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            const btn = registerForm.querySelector('button');
+            
+            // Simple visual validation (no real functionality)
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
             }
-            break;
-
-        case 'delete':
-        case 'remove':
-            if (!args[1]) {
-                console.log('❌ You must provide the task ID');
-                console.log('   Example: node function.js delete 1');
-            } else {
-                todo.delete(args[1]);
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
             }
-            break;
-
-        case 'clear':
-            todo.clear();
-            break;
-
-        default:
-            console.log(`❌ Unknown command: "${command}"`);
-            console.log('💡 Use "node function.js help" to see available commands');
+            
+            // Button animation
+            btn.textContent = 'Registering...';
+            btn.style.background = 'linear-gradient(135deg, #52c234 0%, #4caf50 100%)';
+            
+            // Redirect to welcome.html after a small delay
+            setTimeout(() => {
+                window.location.href = 'welcome.html';
+            }, 1000);
+        });
+        
+        // Real-time password validation
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        
+        confirmPasswordInput.addEventListener('input', function() {
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordInput.style.borderColor = '#ff4444';
+            } else {
+                confirmPasswordInput.style.borderColor = '#4caf50';
+            }
+        });
     }
+
+    // Background particle effects (optional)
+    createFloatingShapes();
+});
+
+// Function to create decorative floating shapes
+function createFloatingShapes() {
+    const container = document.querySelector('.container');
+    if (!container) return;
+    
+    for (let i = 0; i < 5; i++) {
+        const shape = document.createElement('div');
+        shape.style.position = 'fixed';
+        shape.style.width = Math.random() * 100 + 50 + 'px';
+        shape.style.height = shape.style.width;
+        shape.style.borderRadius = '50%';
+        shape.style.background = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+        shape.style.left = Math.random() * window.innerWidth + 'px';
+        shape.style.top = Math.random() * window.innerHeight + 'px';
+        shape.style.pointerEvents = 'none';
+        shape.style.zIndex = '-1';
+        shape.style.animation = `float ${Math.random() * 10 + 10}s ease-in-out infinite`;
+        
+        document.body.appendChild(shape);
+    }
+    
+    // Add keyframes for the floating animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-20px) translateX(20px);
+            }
+            50% {
+                transform: translateY(-40px) translateX(-20px);
+            }
+            75% {
+                transform: translateY(-20px) translateX(-40px);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
-// Run the program
-main();
+// Typewriter effect for messages (if we want to use it)
+function typeWriter(element, text, speed = 50) {
+    let i = 0;
+    element.textContent = '';
+    
+    function type() {
+        if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    
+    type();
+}
